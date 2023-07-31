@@ -1,0 +1,10 @@
+[Unit]
+Description=Trigger actions when the system-wide color scheme preference changes
+After=gnome-session.target
+
+[Service]
+Type=simple
+ExecStart=%h/.local/bin/color-scheme-hook
+
+[Install]
+WantedBy=gnome-session.target
