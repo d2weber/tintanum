@@ -28,8 +28,6 @@ be created automatically.
    - ~/.config/alacritty/current_auto_theme.yml
   ```
 
-* Specify your desired themes in these files:
- * `~/.config/alacritty/theme-light.yml`
- * `~/.config/alacritty/theme-dark.yml`
-  If you wish, these files can also be symlinks.
-
+* Specify your desired themes in these files (potentially symlinked):
+  * `~/.config/alacritty/theme-light.yml`
+  * `~/.config/alacritty/theme-dark.yml`
