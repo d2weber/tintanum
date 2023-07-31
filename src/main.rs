@@ -59,7 +59,7 @@ async fn set_theme(p: SchemePreference) -> std::io::Result<()> {
             } else {
                 return Err(std::io::Error::new(
                     std::io::ErrorKind::AlreadyExists,
-                    "Auto theme exists and is not a symlink",
+                    "Auto theme exists but it isn't a file",
                 ));
             }
         }

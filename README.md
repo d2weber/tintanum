@@ -31,3 +31,20 @@ be created automatically.
 * Specify your desired themes in these files (potentially symlinked):
   * `~/.config/alacritty/theme-light.yml`
   * `~/.config/alacritty/theme-dark.yml`
+
+### Stop service
+
+```bash
+systemctl --user stop color-scheme-preference-hook
+systemctl --user disable color-scheme-preference-hook
+
+```
+
+### Uninstall
+
+Undo the edits:
+* Restore your alacritty configuration
+* Remove `theme-light` and `dark`
+* Stop and disable service
+* Remove deamon from `~/.local/bin`
+* Remove service from `~/.config/systemd/user`
