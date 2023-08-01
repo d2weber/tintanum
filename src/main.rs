@@ -87,28 +87,15 @@ async fn set_theme_alacritty(p: SchemePreference) -> std::io::Result<()> {
         path
     };
     let theme = match p {
-        SchemePreference::NoPreference | SchemePreference::Light => {
-            dst.with_file_name("theme-light.yml")
-        }
-        SchemePreference::Dark => dst.with_file_name("theme-dark.yml"),
+        SchemePreference::Dark => "theme-dark.yml",
+        _ => "theme-light.yml",
     };
-    match fs::metadata(&dst).await {
-        Ok(existing) => {
-            if existing.is_file() {
-                if let Err(e) = fs::remove_file(&dst).await {
-                    return Err(e);
-                };
-            } else {
-                return Err(std::io::Error::new(
-                    std::io::ErrorKind::AlreadyExists,
-                    "Auto theme exists but it isn't a file",
-                ));
-            }
-        }
-        Err(e) if e.kind() == std::io::ErrorKind::NotFound => (),
-        Err(e) => return Err(e),
+
+    if dst.exists() {
+        fs::remove_file(&dst).await?;
     }
-    fs::hard_link(theme, dst).await
+
+    fs::hard_link(dst.with_file_name(theme), dst).await
 }
 
 const NAMESPACE: &'static str = "org.freedesktop.appearance";
