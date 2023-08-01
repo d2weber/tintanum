@@ -1,8 +1,8 @@
 use crate::scheme_preference::SchemePreference;
 use crate::settings_proxy::SettingChanged;
 use crate::settings_proxy::SettingsProxy;
-use futures_util::stream::StreamExt;
 use smol::fs;
+use smol::stream::StreamExt;
 use zbus::Connection;
 
 mod scheme_preference;
