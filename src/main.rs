@@ -46,9 +46,9 @@ async fn set_theme(p: SchemePreference) -> std::io::Result<()> {
     };
     let theme = match p {
         SchemePreference::NoPreference | SchemePreference::Light => {
-            dst.with_file_name("theme-light.yaml")
+            dst.with_file_name("theme-light.yml")
         }
-        SchemePreference::Dark => dst.with_file_name("theme-dark.yaml"),
+        SchemePreference::Dark => dst.with_file_name("theme-dark.yml"),
     };
     match fs::metadata(&dst).await {
         Ok(existing) => {
