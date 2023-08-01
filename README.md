@@ -3,19 +3,18 @@
 This is a deamon that listens for a change of the color scheme preference.
 It switches the theme of alacritty accordingly.
 
+### Dependencies
+
+* cargo
+* pkill
+
+
 ## Usage
 
-### Build deamon and setup systemd service
-
-Within this repository run:
+Within the repository root run:
 
 ```bash
-cargo build --release
-cp target/release/color-scheme-hook ~/.local/bin/
-cp color-scheme-preference-hook.service ~/.config/systemd/user/
-systemctl --user daemon-reload
-systemctl --user enable color-scheme-preference-hook
-systemctl --user start color-scheme-preference-hook
+make install
 ```
 
 ### Configure themes
@@ -32,19 +31,14 @@ be created automatically.
   * `~/.config/alacritty/theme-light.yml`
   * `~/.config/alacritty/theme-dark.yml`
 
-### Stop service
 
-```bash
-systemctl --user stop color-scheme-preference-hook
-systemctl --user disable color-scheme-preference-hook
-
-```
-
-### Uninstall
+## Uninstall
 
 Undo the edits:
 * Restore your alacritty configuration
 * Remove `theme-light` and `dark`
-* Stop and disable service
-* Remove deamon from `~/.local/bin`
-* Remove service from `~/.config/systemd/user`
+* Uninstall service
+
+  ```bash
+  make uninstall
+  ```
