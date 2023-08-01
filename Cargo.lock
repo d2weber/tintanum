@@ -216,6 +216,7 @@ name = "color-scheme-hook"
 version = "0.1.0"
 dependencies = [
  "smol",
+ "toml_edit",
  "zbus",
 ]
 

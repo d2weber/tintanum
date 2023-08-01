@@ -2,7 +2,12 @@ use crate::scheme_preference::SchemePreference;
 use crate::settings_proxy::SettingChanged;
 use crate::settings_proxy::SettingsProxy;
 use smol::fs;
+use smol::fs::read_to_string;
+use smol::fs::File;
+use smol::io::AsyncWriteExt;
+use smol::process::Command;
 use smol::stream::StreamExt;
+use toml_edit::{value, Document};
 use zbus::Connection;
 
 mod scheme_preference;
@@ -39,6 +44,43 @@ fn main() -> zbus::Result<()> {
 }
 
 async fn set_theme(p: SchemePreference) -> std::io::Result<()> {
+    let t1 = smol::spawn(set_theme_alacritty(p));
+    let t2 = smol::spawn(set_theme_helix(p));
+    t1.await?;
+    t2.await
+}
+
+async fn set_theme_helix(p: SchemePreference) -> std::io::Result<()> {
+    let path = {
+        let mut path = std::path::PathBuf::from(std::env::var_os("HOME").unwrap());
+        path.push(".config/helix/config.toml");
+        path
+    };
+
+    let mut config = read_to_string(&path)
+        .await?
+        .parse::<Document>()
+        .expect("Couldn't parse config file");
+
+    let theme = match p {
+        SchemePreference::Dark => "adwaita-dark",
+        _ => "onelight",
+    };
+    config["theme"] = value(theme);
+
+    let tmp_path = path.with_extension("tmp.toml");
+
+    let mut file = File::create(&tmp_path).await?;
+    file.write(config.to_string().as_bytes()).await?;
+    file.flush().await?;
+
+    fs::rename(tmp_path, path).await?;
+    Command::new("pkill").args(["-USR1", "hx"]).status().await?;
+
+    Ok(())
+}
+
+async fn set_theme_alacritty(p: SchemePreference) -> std::io::Result<()> {
     let dst = {
         let mut path = std::path::PathBuf::from(std::env::var_os("HOME").unwrap());
         path.push(".config/alacritty/current_auto_theme.yml");
