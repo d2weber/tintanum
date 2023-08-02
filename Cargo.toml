@@ -10,5 +10,4 @@ strip = true
 
 [dependencies]
 smol = "1.3.0"
-toml_edit = "0.19.14"
 zbus = "3.14.1"
