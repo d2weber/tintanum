@@ -19,26 +19,22 @@ make install
 
 ### Configure themes
 
-* Add required import to your alacritty configuration. The `current_auto_theme.yml` will
-be created automatically.
+Specify your themes in the config:
 
-  ```bash
-  import:
-   - ~/.config/alacritty/current_auto_theme.yml
-  ```
+```yaml
+import:
+ - ~/.config/alacritty/themes/themes/your-light-theme.yaml #[light]
+# - ~/.config/alacritty/themes/themes/your-dark-theme.yaml #[dark]
+```
 
-* Specify your desired themes in these files (potentially symlinked):
-  * `~/.config/alacritty/theme-light.yml`
-  * `~/.config/alacritty/theme-dark.yml`
+As soon as the daemon runs it will adjust the commented lines according to the
+system scheme preference.
 
 
 ## Uninstall
 
-Undo the edits:
-* Restore your alacritty configuration
-* Remove `theme-light` and `dark`
-* Uninstall service
+Uninstall systemd service
 
-  ```bash
-  make uninstall
-  ```
+```bash
+make uninstall
+```
