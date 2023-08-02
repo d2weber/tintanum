@@ -62,9 +62,7 @@ impl<'a> SchemeProxy<'a> {
         SchemePreference::try_from(v)
     }
 
-    pub async fn receive_scheme_changed(
-        &self,
-    ) -> zbus::Result<impl Stream<Item = SchemePreference>> {
+    pub async fn receive_changed(&self) -> zbus::Result<impl Stream<Item = SchemePreference>> {
         Ok(self.proxy.receive_setting_changed().await?.filter_map(|x| {
             let Ok(args) = x.args() else {
                 eprintln!("Couldn't retrieve signal arguments.");
