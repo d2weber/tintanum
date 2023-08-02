@@ -4,6 +4,7 @@ use crate::settings_proxy::SettingsProxy;
 use smol::fs;
 use smol::fs::read_to_string;
 use smol::fs::File;
+use smol::future;
 use smol::io::AsyncWriteExt;
 use smol::process::Command;
 use smol::stream::StreamExt;
@@ -44,10 +45,9 @@ fn main() -> zbus::Result<()> {
 }
 
 async fn set_theme(p: SchemePreference) -> std::io::Result<()> {
-    let t1 = smol::spawn(set_theme_alacritty(p));
-    let t2 = smol::spawn(set_theme_helix(p));
-    t1.await?;
-    t2.await
+    let (r1, r2) = future::zip(set_theme_alacritty(p), set_theme_helix(p)).await;
+    r1?;
+    r2
 }
 
 async fn set_theme_helix(p: SchemePreference) -> std::io::Result<()> {
