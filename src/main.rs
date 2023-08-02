@@ -52,6 +52,28 @@ async fn set_theme(p: SchemePreference) -> std::io::Result<()> {
     r2
 }
 
+async fn set_theme_alacritty(p: SchemePreference) -> std::io::Result<()> {
+    let path = {
+        let mut path = std::path::PathBuf::from(std::env::var_os("HOME").unwrap());
+        path.push(".config/alacritty/alacritty.yml");
+        path
+    };
+
+    let tmp_path = path.with_extension("tmp.yml");
+    let mut out = File::create(&tmp_path).await?;
+
+    if let e @ Err(_) = adjust_config(File::open(&path).await?, &mut out, p).await {
+        out.close().await?;
+        return e;
+    };
+
+    out.flush().await?;
+
+    fs::rename(tmp_path, path).await?;
+
+    Ok(())
+}
+
 async fn set_theme_helix(p: SchemePreference) -> std::io::Result<()> {
     let path = {
         let mut path = std::path::PathBuf::from(std::env::var_os("HOME").unwrap());
@@ -119,26 +141,8 @@ async fn adjust_config(
     Ok(())
 }
 
-async fn set_theme_alacritty(p: SchemePreference) -> std::io::Result<()> {
-    let dst = {
-        let mut path = std::path::PathBuf::from(std::env::var_os("HOME").unwrap());
-        path.push(".config/alacritty/current_auto_theme.yml");
-        path
-    };
-    let theme = match p {
-        SchemePreference::Dark => "theme-dark.yml",
-        _ => "theme-light.yml",
-    };
-
-    if dst.exists() {
-        fs::remove_file(&dst).await?;
-    }
-
-    fs::hard_link(dst.with_file_name(theme), dst).await
-}
-
-const NAMESPACE: &'static str = "org.freedesktop.appearance";
-const KEY: &'static str = "color-scheme";
+const NAMESPACE: &str = "org.freedesktop.appearance";
+const KEY: &str = "color-scheme";
 
 async fn read_scheme_preference(proxy: &SettingsProxy<'_>) -> zbus::Result<SchemePreference> {
     let v = proxy.read(NAMESPACE, KEY).await?;
