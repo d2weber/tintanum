@@ -1,4 +1,4 @@
-use crate::scheme_preference::SchemePreference;
+use crate::settings_proxy::SchemePreference;
 use smol::fs;
 use smol::fs::File;
 use smol::io::AsyncBufReadExt;
