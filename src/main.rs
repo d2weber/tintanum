@@ -53,47 +53,27 @@ async fn set_theme(p: SchemePreference) -> std::io::Result<()> {
 }
 
 async fn set_theme_alacritty(p: SchemePreference) -> std::io::Result<()> {
-    let path = {
-        let mut path = std::path::PathBuf::from(std::env::var_os("HOME").unwrap());
-        path.push(".config/alacritty/alacritty.yml");
-        path
-    };
-
-    let tmp_path = path.with_extension("tmp.yml");
-    let mut out = File::create(&tmp_path).await?;
-
-    if let e @ Err(_) = adjust_config(File::open(&path).await?, &mut out, p).await {
-        out.close().await?;
-        return e;
-    };
-
-    out.flush().await?;
-
-    fs::rename(tmp_path, path).await?;
-
-    Ok(())
+    write_updated_config("alacritty/alacritty.yml", p).await
 }
 
 async fn set_theme_helix(p: SchemePreference) -> std::io::Result<()> {
-    let path = {
-        let mut path = std::path::PathBuf::from(std::env::var_os("HOME").unwrap());
-        path.push(".config/helix/config.toml");
-        path
-    };
+    write_updated_config("helix/config.toml", p).await?;
+    Command::new("pkill").args(["-USR1", "hx"]).status().await?;
+    Ok(())
+}
 
-    let tmp_path = path.with_extension("tmp.toml");
+async fn write_updated_config(rel_path: &str, p: SchemePreference) -> Result<(), std::io::Error> {
+    let path = xdg::BaseDirectories::new()? // Could probably be cached
+        .find_config_file(rel_path)
+        .ok_or(std::io::Error::new(std::io::ErrorKind::NotFound, rel_path))?;
+
+    let tmp_path = path.with_extension("auto_dark_theme.tmp");
     let mut out = File::create(&tmp_path).await?;
-
     if let e @ Err(_) = adjust_config(File::open(&path).await?, &mut out, p).await {
-        out.close().await?;
+        fs::remove_file(tmp_path).await?;
         return e;
     };
-
-    out.flush().await?;
-
     fs::rename(tmp_path, path).await?;
-    Command::new("pkill").args(["-USR1", "hx"]).status().await?;
-
     Ok(())
 }
 
@@ -138,6 +118,8 @@ async fn adjust_config(
             format!("Tag `{t}` not found"),
         ));
     }
+    out.flush().await?;
+
     Ok(())
 }
 
