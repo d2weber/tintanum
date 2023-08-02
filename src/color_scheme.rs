@@ -1,5 +1,5 @@
-use smol::stream::Stream;
-use smol::stream::StreamExt;
+use smol::prelude::*;
+use smol::stream::once;
 use zbus::dbus_proxy;
 use zbus::Connection;
 
@@ -63,17 +63,24 @@ impl<'a> SchemeProxy<'a> {
     }
 
     pub async fn receive_changed(&self) -> zbus::Result<impl Stream<Item = SchemePreference>> {
-        Ok(self.proxy.receive_setting_changed().await?.filter_map(|x| {
-            let Ok(args) = x.args() else {
-                eprintln!("Couldn't retrieve signal arguments.");
-                return None;
-            };
-            if !(args.namespace == NAMESPACE && args.key == KEY) {
-                return None;
-            }
-            SchemePreference::try_from(args.value)
-                .map_err(|e| eprintln!("Couldn't get args: {e:?}"))
-                .ok()
-        }))
+        let mut preference = self.read().await?;
+        let signal = self.proxy.receive_setting_changed().await?;
+        Ok(once(preference).chain(signal.filter_map(move |x| {
+            to_preference(x).ok().and_then(|p| {
+                if p == preference {
+                    return None;
+                }
+                preference = p;
+                Some(p)
+            })
+        })))
     }
+}
+
+fn to_preference(x: SettingChanged) -> zbus::Result<SchemePreference> {
+    let args = x.args()?;
+    if !(args.namespace == NAMESPACE && args.key == KEY) {
+        return Err(zbus::Error::InvalidField);
+    }
+    SchemePreference::try_from(args.value)
 }

@@ -1,14 +1,10 @@
 use crate::color_scheme::SchemePreference;
 use smol::fs;
 use smol::fs::File;
-use smol::io::AsyncBufReadExt;
-use smol::io::AsyncWriteExt;
 use smol::io::BufReader;
-use smol::prelude::AsyncRead;
-use smol::prelude::AsyncWrite;
-use smol::stream::StreamExt;
+use smol::prelude::*;
 
-pub(crate) async fn write_updated_config(
+pub async fn write_updated_config(
     rel_path: &str,
     p: SchemePreference,
 ) -> Result<(), std::io::Error> {
