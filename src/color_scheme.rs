@@ -1,7 +1,8 @@
 use smol::prelude::*;
 use smol::stream::once;
-use zbus::dbus_proxy;
+use zbus::zvariant::OwnedValue;
 use zbus::Connection;
+use zbus::ProxyBuilder;
 
 const NAMESPACE: &str = "org.freedesktop.appearance";
 const KEY: &str = "color-scheme";
@@ -17,7 +18,7 @@ pub enum SchemePreference {
 impl TryFrom<zbus::zvariant::Value<'_>> for SchemePreference {
     type Error = zbus::Error;
 
-    fn try_from(value: zbus::zvariant::Value) -> zbus::Result<SchemePreference> {
+    fn try_from(value: zbus::zvariant::Value) -> zbus::Result<Self> {
         Ok(match u32::try_from(value)? {
             0 => SchemePreference::NoPreference,
             1 => SchemePreference::Dark,
@@ -27,57 +28,62 @@ impl TryFrom<zbus::zvariant::Value<'_>> for SchemePreference {
     }
 }
 
-#[dbus_proxy(
-    interface = "org.freedesktop.portal.Settings",
-    default_service = "org.freedesktop.portal.Desktop",
-    default_path = "/org/freedesktop/portal/desktop",
-    gen_blocking = false
-)]
-trait Settings {
-    fn read(&self, namespace: &str, key: &str) -> zbus::Result<zbus::zvariant::OwnedValue>;
-
-    #[dbus_proxy(signal)]
-    fn setting_changed(
-        &self,
-        namespace: &str,
-        key: &str,
-        value: zbus::zvariant::Value<'_>,
-    ) -> zbus::Result<()>;
+impl<'s> TryFrom<&'s ::zbus::Message> for SchemePreference {
+    type Error = ::zbus::Error;
+    fn try_from(message: &'s ::zbus::Message) -> ::zbus::Result<Self> {
+        message
+            .body::<(&str, &str, zbus::zvariant::Value<'_>)>()
+            .map_err(::std::convert::Into::into)
+            .and_then(|args| SchemePreference::try_from(args.2))
+    }
 }
 
-pub struct SchemeProxy<'a> {
-    proxy: SettingsProxy<'a>,
-}
+pub struct SchemeProxy<'a>(zbus::Proxy<'a>);
 
 impl<'a> SchemeProxy<'a> {
     pub async fn new() -> zbus::Result<SchemeProxy<'a>> {
         let connection = Connection::session().await?;
-        let proxy = SettingsProxy::new(&connection).await?;
-        Ok(SchemeProxy { proxy })
+        let proxy = ProxyBuilder::new_bare(&connection)
+            .interface("org.freedesktop.portal.Settings")?
+            .path("/org/freedesktop/portal/desktop")?
+            .destination("org.freedesktop.portal.Desktop")?
+            .build()
+            .await?;
+        Ok(Self(proxy))
     }
 
     pub async fn read(&self) -> zbus::Result<SchemePreference> {
-        let v = self.proxy.read(NAMESPACE, KEY).await?;
-        let v = v.downcast_ref::<zbus::zvariant::Value>().unwrap().clone();
-        SchemePreference::try_from(v)
+        let reply: OwnedValue = self.0.call("Read", &(NAMESPACE, KEY)).await?;
+        reply
+            .downcast_ref::<zbus::zvariant::Value>()
+            .cloned()
+            .ok_or(zbus::zvariant::Error::IncorrectType.into())
+            .and_then(SchemePreference::try_from)
     }
 
-    pub async fn receive_changed(&self) -> zbus::Result<impl Stream<Item = SchemePreference>> {
-        let mut preference = self.read().await?;
+    // Can contain duplicates
+    async fn receive_changed(&self) -> zbus::Result<impl Stream<Item = SchemePreference>> {
         let signal = self
-            .proxy
-            .receive_setting_changed_with_args(&[(0, NAMESPACE), (1, KEY)])
-            .await?;
-        Ok(once(preference).chain(signal.filter_map(move |x| {
-            SchemePreference::try_from(x.args().ok()?.value)
-                .ok()
-                .and_then(|p| {
-                    if p == preference {
-                        return None;
-                    }
-                    preference = p;
-                    Some(p)
-                })
-        })))
+            .0
+            .receive_signal_with_args("SettingChanged", &[(0, NAMESPACE), (1, KEY)])
+            .await?
+            .filter_map(|x| SchemePreference::try_from(&*x).ok());
+
+        Ok(signal)
+    }
+
+    pub async fn init_and_receive_changed(
+        &self,
+    ) -> zbus::Result<impl Stream<Item = SchemePreference>> {
+        let mut preference = self.read().await?;
+        Ok(
+            once(preference).chain(self.receive_changed().await?.filter_map(move |p| {
+                if p == preference {
+                    return None;
+                }
+                preference = p;
+                Some(p)
+            })),
+        )
     }
 }
