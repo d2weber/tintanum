@@ -64,23 +64,20 @@ impl<'a> SchemeProxy<'a> {
 
     pub async fn receive_changed(&self) -> zbus::Result<impl Stream<Item = SchemePreference>> {
         let mut preference = self.read().await?;
-        let signal = self.proxy.receive_setting_changed().await?;
+        let signal = self
+            .proxy
+            .receive_setting_changed_with_args(&[(0, NAMESPACE), (1, KEY)])
+            .await?;
         Ok(once(preference).chain(signal.filter_map(move |x| {
-            to_preference(x).ok().and_then(|p| {
-                if p == preference {
-                    return None;
-                }
-                preference = p;
-                Some(p)
-            })
+            SchemePreference::try_from(x.args().ok()?.value)
+                .ok()
+                .and_then(|p| {
+                    if p == preference {
+                        return None;
+                    }
+                    preference = p;
+                    Some(p)
+                })
         })))
     }
-}
-
-fn to_preference(x: SettingChanged) -> zbus::Result<SchemePreference> {
-    let args = x.args()?;
-    if !(args.namespace == NAMESPACE && args.key == KEY) {
-        return Err(zbus::Error::InvalidField);
-    }
-    SchemePreference::try_from(args.value)
 }
