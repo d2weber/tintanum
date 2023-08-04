@@ -42,16 +42,25 @@ impl<'s> TryFrom<&'s zbus::Message> for SchemePreference {
 
 pub struct SchemeProxy<'a>(zbus::Proxy<'a>);
 
+impl<'a> ::zbus::ProxyDefault for SchemeProxy<'a> {
+    const INTERFACE: &'static str = "org.freedesktop.portal.Settings";
+    const DESTINATION: &'static str = "org.freedesktop.portal.Desktop";
+    const PATH: &'static str = "/org/freedesktop/portal/desktop";
+}
+
+impl<'c> From<zbus::Proxy<'c>> for SchemeProxy<'c> {
+    fn from(proxy: zbus::Proxy<'c>) -> Self {
+        SchemeProxy(proxy)
+    }
+}
+
 impl<'a> SchemeProxy<'a> {
-    pub async fn new() -> Result<SchemeProxy<'a>> {
-        let connection = Connection::session().await?;
-        let proxy = ProxyBuilder::new_bare(&connection)
-            .interface("org.freedesktop.portal.Settings")?
-            .path("/org/freedesktop/portal/desktop")?
-            .destination("org.freedesktop.portal.Desktop")?
-            .build()
-            .await?;
-        Ok(Self(proxy))
+    pub async fn new(conn: &Connection) -> Result<SchemeProxy<'a>> {
+        Self::builder(conn).build().await
+    }
+
+    pub fn builder(conn: &::zbus::Connection) -> ProxyBuilder<'a, Self> {
+        ProxyBuilder::new(conn).cache_properties(zbus::CacheProperties::No)
     }
 
     pub async fn read(&self) -> Result<SchemePreference> {

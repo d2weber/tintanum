@@ -10,7 +10,7 @@ mod write_config;
 
 fn main() -> zbus::Result<()> {
     smol::block_on(async {
-        let scheme = SchemeProxy::new().await?;
+        let scheme = SchemeProxy::new(&zbus::Connection::session().await?).await?;
         let mut stream = scheme.init_and_receive_changed().await?;
         while let Some(preference) = stream.next().await {
             set_theme(preference).await;
