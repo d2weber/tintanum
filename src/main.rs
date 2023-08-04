@@ -20,7 +20,7 @@ fn main() -> zbus::Result<()> {
 }
 
 async fn set_theme(p: SchemePreference) {
-    println!("Setting preference {:?}", p);
+    println!("Setting preference {p:?}");
     let (r1, r2) = future::zip(set_theme_alacritty(p), set_theme_helix(p)).await;
     if let Err(e) = r1.and(r2) {
         eprintln!("Error: {e}");
