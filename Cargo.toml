@@ -3,6 +3,11 @@ name = "tintanum"
 version = "0.1.0"
 edition = "2021"
 
+description = "Obtain the system color scheme preference"
+repository = "https://github.com/d2weber/tintanum"
+keywords = ["Color", "Theme", "Freedesktop", "D-Bus", "DBus", "IPC"]
+license = "MIT"
+
 [profile.release]
 strip = true
 
