@@ -10,6 +10,7 @@ strip = true
 
 [dependencies]
 futures-lite = "1.13.0"
+serde = { version = "1.0.183", optional = true, features = ["derive"] }
 zbus = "3.14.1"
 
 [dev-dependencies]

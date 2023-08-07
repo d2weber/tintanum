@@ -7,11 +7,16 @@ use zbus::Error;
 use zbus::ProxyBuilder;
 use zbus::Result;
 
+#[cfg(feature = "serde")]
+use serde::{Deserialize, Serialize};
+
 const NAMESPACE: &str = "org.freedesktop.appearance";
 const KEY: &str = "color-scheme";
 
-#[derive(Debug, PartialEq, Clone, Copy)]
+#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
+#[derive(Debug, Clone, Copy, Default, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub enum SchemePreference {
+    #[default]
     NoPreference = 0,
     Dark = 1,
     Light = 2,
