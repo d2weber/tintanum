@@ -4,7 +4,7 @@ After=gnome-session.target
 
 [Service]
 Type=simple
-ExecStart=%h/.local/bin/color-scheme-hook
+ExecStart=%h/.local/bin/dtintanum
 
 [Install]
 WantedBy=gnome-session.target

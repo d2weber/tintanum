@@ -1,24 +1,21 @@
-use crate::color_scheme::SchemePreference;
-use smol::fs;
-use smol::fs::File;
-use smol::io::BufReader;
-use smol::prelude::*;
+use std::path::Path;
+
+use crate::SchemePreference;
+use async_fs::File;
+use futures_lite::io::BufReader;
+use futures_lite::prelude::*;
 
 pub async fn write_updated_config(
-    rel_path: &str,
+    path: impl AsRef<Path>,
     p: SchemePreference,
 ) -> Result<(), std::io::Error> {
-    let path = xdg::BaseDirectories::new()? // Could probably be cached
-        .find_config_file(rel_path)
-        .ok_or(std::io::Error::new(std::io::ErrorKind::NotFound, rel_path))?;
-
-    let tmp_path = path.with_extension("auto_dark_theme.tmp");
+    let tmp_path = path.as_ref().with_extension("auto_dark_theme.tmp");
     let mut out = File::create(&tmp_path).await?;
     if let e @ Err(_) = adjust_config(File::open(&path).await?, &mut out, p).await {
-        fs::remove_file(tmp_path).await?;
+        async_fs::remove_file(tmp_path).await?;
         return e;
     };
-    fs::rename(tmp_path, path).await?;
+    async_fs::rename(tmp_path, path).await?;
     Ok(())
 }
 

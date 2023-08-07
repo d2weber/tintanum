@@ -1,11 +1,13 @@
-use smol::prelude::*;
-use smol::stream::once;
+use futures_lite::prelude::*;
+use futures_lite::stream::once;
 use zbus::zvariant;
 use zbus::zvariant::OwnedValue;
 use zbus::Connection;
 use zbus::Error;
 use zbus::ProxyBuilder;
 use zbus::Result;
+
+pub mod write_config;
 
 const NAMESPACE: &str = "org.freedesktop.appearance";
 const KEY: &str = "color-scheme";

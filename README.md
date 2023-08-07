@@ -1,7 +1,9 @@
-# Color scheme hook
+# Tintanum
 
-This is a deamon that listens for a change of the color scheme preference.
-It switches the theme of alacritty accordingly.
+This is a deamon that listens for a change of the color scheme preference and changes
+config files accordingly. Currently supported:
+ * [Alacritty](https://github.com/alacritty/alacritty)
+ * [Helix](https://github.com/helix-editor/helix/)
 
 ### Dependencies
 

@@ -1,22 +1,24 @@
 install: install_bin install_daemon start_daemon
 
-uninstall: stop_daemon
-	rm ~/.local/bin/color-scheme-hook
-	rm ~/.config/systemd/user/color-scheme-preference-hook.service
-
 install_bin:
-	cargo build --release
-	systemctl --user stop color-scheme-preference-hook || true
-	cp target/release/color-scheme-hook ~/.local/bin/
+	cargo install --path . --example dtintanum --root ~/.local/
 
 install_daemon:
+	cp examples/dtintanum/tintanum.service ~/.config/systemd/user/
 	systemctl --user daemon-reload
-	cp color-scheme-preference-hook.service ~/.config/systemd/user/
 
 start_daemon:
-	systemctl --user enable color-scheme-preference-hook
-	systemctl --user start color-scheme-preference-hook
+	systemctl --user enable tintanum
+	systemctl --user start tintanum
+
+uninstall: stop_daemon uninstall_daemon
+	cargo uninstall tintanum --root ~/.local/
+
+uninstall_daemon:
+	rm ~/.config/systemd/user/tintanum.service
+	systemctl --user daemon-reload
+
 
 stop_daemon:
-	systemctl --user stop color-scheme-preference-hook
-	systemctl --user disable color-scheme-preference-hook
+	systemctl --user stop tintanum
+	systemctl --user disable tintanum
