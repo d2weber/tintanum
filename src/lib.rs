@@ -45,6 +45,7 @@ impl<'s> TryFrom<&'s zbus::Message> for SchemePreference {
     }
 }
 
+#[derive(Debug, Clone)]
 pub struct SchemeProxy<'a>(zbus::Proxy<'a>);
 
 impl<'a> ::zbus::ProxyDefault for SchemeProxy<'a> {
@@ -62,6 +63,10 @@ impl<'c> From<zbus::Proxy<'c>> for SchemeProxy<'c> {
 impl<'a> SchemeProxy<'a> {
     pub async fn new(conn: &Connection) -> Result<SchemeProxy<'a>> {
         Self::builder(conn).build().await
+    }
+
+    pub async fn with_new_connection() -> Result<SchemeProxy<'a>> {
+        Self::new(&zbus::Connection::session().await?).await
     }
 
     pub fn builder(conn: &::zbus::Connection) -> ProxyBuilder<'a, Self> {
