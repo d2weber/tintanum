@@ -7,8 +7,6 @@ use zbus::Error;
 use zbus::ProxyBuilder;
 use zbus::Result;
 
-pub mod write_config;
-
 const NAMESPACE: &str = "org.freedesktop.appearance";
 const KEY: &str = "color-scheme";
 
