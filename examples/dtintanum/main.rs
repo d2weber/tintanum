@@ -44,7 +44,7 @@ static BASE_DIRS: OnceLock<Result<BaseDirectories, xdg::BaseDirectoriesError>> =
 
 fn find_config(rel_path: impl AsRef<Path>) -> std::io::Result<PathBuf> {
     BASE_DIRS
-        .get_or_init(|| BaseDirectories::new())
+        .get_or_init(BaseDirectories::new)
         .as_ref()
         .map_err(|_| std::io::ErrorKind::NotFound)?
         .find_config_file(rel_path)
@@ -75,6 +75,9 @@ async fn adjust_config(
         _ => ["#[dark]", "#[light]"],
     }
     .map(Some);
+
+    println!("Old tag: {old_tag:?}");
+    println!("New tag: {new_tag:?}");
 
     let mut lines = BufReader::new(inp).lines();
     while let Some(Ok(line)) = lines.next().await {
