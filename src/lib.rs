@@ -40,8 +40,8 @@ impl<'s> TryFrom<&'s zbus::Message> for SchemePreference {
     type Error = Error;
     fn try_from(message: &'s zbus::Message) -> Result<Self> {
         let body = message.body();
-        let value: zvariant::Value = body.deserialize()?;
-        SchemePreference::try_from(value)
+        let args: (&str, &str, zvariant::Value<'_>) = body.deserialize()?;
+        SchemePreference::try_from(args.2)
     }
 }
 
